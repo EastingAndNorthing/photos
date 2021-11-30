@@ -1,0 +1,7 @@
+.DS_Store
+
+dist/
+# data/*.json
+node_modules
+.env*
+storage

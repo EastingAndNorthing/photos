@@ -1,0 +1,18 @@
+import mongoose from 'mongoose';
+
+export type Point = {
+    type: string,
+    coordinates: Number[]
+}
+
+export const PointSchema = new mongoose.Schema({
+    type: {
+        type: String,
+        enum: ['Point'],
+        required: true
+    },
+    coordinates: {
+        type: [Number],
+        required: true
+    }
+})
