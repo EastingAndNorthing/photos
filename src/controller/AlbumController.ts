@@ -1,5 +1,5 @@
 import Album, { IAlbum } from '../model/Album.model';
-import { IPhoto } from '../model/Photo.model';
+import PhotoModel, { IPhoto } from '../model/Photo.model';
 
 export class AlbumController {
 
@@ -12,7 +12,8 @@ export class AlbumController {
     }
 
     static async findAll() {
-        return await Album.find();
+        return await Album.find()
+            .populate({ path: 'photos', options: { depth: 0 }}); // @TODO figure out depth
     }
     
     // @TODO use IAlbum without the Document extension meuk
@@ -21,9 +22,7 @@ export class AlbumController {
         description: string;
         date: Date;
         photos?: IPhoto[];
-    }) {
-
-        console.log(album);
+    }) : Promise<IAlbum> {
 
         return await Album.create(album);
 

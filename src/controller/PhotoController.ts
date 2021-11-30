@@ -1,4 +1,4 @@
-import { IAlbum } from '../model/Album.model';
+import AlbumModel, { IAlbum } from '../model/Album.model';
 import Photo, { IPhoto } from '../model/Photo.model';
 import { Point } from '../schema/PointSchema';
 
@@ -13,7 +13,8 @@ export class PhotoController {
     }
 
     static async findAll() {
-        return await Photo.find();
+        return await Photo.find()
+            .populate({ path: 'album', options: { depth: 0 }}); // @TODO figure out depth
     }
 
     // @TODO use IPhoto without the Document extension meuk
@@ -24,7 +25,7 @@ export class PhotoController {
         location?: Point,
         album?: IAlbum[];
         views?: number,
-    }) {
+    }) : Promise<IPhoto> {
 
         if(photo.location?.coordinates[0] == 0 && photo.location?.coordinates[1] == 0)
             delete photo.location

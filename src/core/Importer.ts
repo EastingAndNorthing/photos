@@ -3,6 +3,7 @@ import path from "path"
 import { getConfig } from "../config"
 import { AlbumController } from "../controller/AlbumController";
 import { PhotoController } from "../controller/PhotoController";
+import AlbumModel from "../model/Album.model";
 
 
 export class Importer {
@@ -27,7 +28,7 @@ export class Importer {
         console.log(album);
         
         for (const photo of rawAlbum.photos) {
-            PhotoController.create({
+            const photoDoc = await PhotoController.create({
                 title: photo.title,
                 description: photo.description,
                 date: new Date(rawAlbum.self.date.timestamp * 1000),
@@ -40,7 +41,11 @@ export class Importer {
                 },
                 album: album,
                 views: photo.imageViews,
-            }); 
+            });
+
+            const updated = await AlbumModel.findOneAndUpdate({ _id: album._id }, 
+                { $push: { 'photos': photoDoc._id }
+            }, { new: true });
         }
 
     }
