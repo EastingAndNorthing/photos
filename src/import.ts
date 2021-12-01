@@ -12,6 +12,7 @@ async function f() {
     const albums = await m.findAlbums();
 
     m.import(albums[0], true);
+    m.import(albums[1], true);
 
 }
 f()

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
 import mongoose, { Model } from "mongoose";
-import { Album } from "../model/Album.model";
 
 export class BaseController {
 
@@ -17,7 +16,7 @@ export class BaseController {
     }
 
     async findAll(req: Request, res: Response) {
-        res.json(await this.model.find()) // .populate('album')
+        res.json(await this.model.find())
     }
 
     async findOne(req: Request, res: Response) {

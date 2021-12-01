@@ -13,7 +13,11 @@ export class Importer {
     }
 
     public async findAlbums() {
-        return await fs.promises.readdir(this.baseDir);
+        return (await fs.promises.readdir(this.baseDir, { withFileTypes: true }))
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name)
+
+        // return await fs.promises.readdir(this.baseDir);
     }
 
     public async import(albumName: string, deleteExisting = false) {

@@ -14,6 +14,10 @@ export class PhotoController extends BaseController {
         res.json(await this.model.findOne({ _id: req.params.id }).populate('album'))
     }
 
+    async findAll(req: Request, res: Response) {
+        res.json(await this.model.find().sort({ date: -1 }).populate('album'))
+    }
+
     // @TODO use IPhoto without the Document extension meuk
     static async create(photo: IPhoto) : Promise<IPhoto> {
 
