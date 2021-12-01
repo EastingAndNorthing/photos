@@ -35,8 +35,6 @@ export class Configuration {
             
             dbUrl: args.dbUrl               || process.env.dbUrl        || 'mongodb://localhost:27017',
             dbName: args.dbName             || process.env.dbName       || 'photos',
-            dbAlbums: args.dbAlbums         || process.env.dbAlbums     || 'albums',
-            dbPhotos: args.dbPhotos         || process.env.dbPhotos     || 'photos',
 
             port: args.port || process.env.port || 3000,
         }

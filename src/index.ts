@@ -1,7 +1,6 @@
 import { getConfig } from "./config";
-import { routeAlbums } from './routes/album';
-import { routePhotos } from "./routes/photos";
 import connect from './core/DB';
+import routes from './routes';
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -19,8 +18,7 @@ app.use('/', express.static(path.join(baseDir, 'public')))
 app.options('*', cors());
 
 connect(getConfig('dbUrl'));
-routeAlbums(app);
-routePhotos(app);
+app.use(routes);
 
 const httpServer = http.createServer(app);
 httpServer.listen(getConfig('port'), () => {

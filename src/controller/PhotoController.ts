@@ -1,35 +1,24 @@
-import AlbumModel, { IAlbum } from '../model/Album.model';
-import Photo, { IPhoto } from '../model/Photo.model';
+import { Router, Request, Response } from 'express';
+import { Album, IAlbum } from '../model/Album.model';
+import { Photo, IPhoto } from '../model/Photo.model';
 import { Point } from '../schema/PointSchema';
+import { BaseController } from './BaseController';
 
-export class PhotoController {
+export class PhotoController extends BaseController {
 
-    static async find(criteria: any) {
-        return await Photo.find(criteria)
+    constructor() {
+        super(Photo);
     }
 
-    static async findOne(criteria: any) {
-        return await Photo.findOne(criteria)
-    }
-
-    static async findAll() {
-        return await Photo.find()
-            .populate({ path: 'album', options: { depth: 0 }}); // @TODO figure out depth
+    async findOne(req: Request, res: Response) {
+        res.json(await this.model.findOne({ _id: req.params.id }).populate('album'))
     }
 
     // @TODO use IPhoto without the Document extension meuk
-    static async create(photo: {
-        title: string;
-        description: string;
-        date: Date;
-        location?: Point,
-        album?: IAlbum[];
-        views?: number,
-    }) : Promise<IPhoto> {
+    static async create(photo: IPhoto) : Promise<IPhoto> {
 
         if(photo.location?.coordinates[0] == 0 && photo.location?.coordinates[1] == 0)
             delete photo.location
-            // photo.location = undefined;
 
         return await Photo.create(photo);
 

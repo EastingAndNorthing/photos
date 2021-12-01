@@ -1,10 +1,8 @@
 import fs from "fs"
 import path from "path"
-import { getConfig } from "../config"
-import { AlbumController } from "../controller/AlbumController";
-import { PhotoController } from "../controller/PhotoController";
-import AlbumModel from "../model/Album.model";
-
+import { Photo } from "../model/Photo.model";
+import { Album } from "../model/Album.model";
+import { Point } from "../schema/PointSchema";
 
 export class Importer {
 
@@ -18,59 +16,71 @@ export class Importer {
         return await fs.promises.readdir(this.baseDir);
     }
 
-    public async import(albumName: string) {
+    public async import(albumName: string, deleteExisting = false) {
 
-        // const photoDB = await PhotoDB.getInstance();
+        const rawAlbum = await this.readJSON(albumName);
 
-        const rawAlbum = await this.parseRawAlbum(albumName);
-        const album = await this.getAlbum(rawAlbum);
+        let album: any = await Album.findOne({ title: rawAlbum.self.title });
 
-        console.log(album);
-        
-        for (const photo of rawAlbum.photos) {
-            const photoDoc = await PhotoController.create({
-                title: photo.title,
-                description: photo.description,
-                date: new Date(rawAlbum.self.date.timestamp * 1000),
-                location: {
-                    type: 'Point',
-                    coordinates: [
-                        photo.geoData.longitude,
-                        photo.geoData.latitude,
-                    ]
-                },
-                album: album,
-                views: photo.imageViews,
-            });
-
-            const updated = await AlbumModel.findOneAndUpdate({ _id: album._id }, 
-                { $push: { 'photos': photoDoc._id }
-            }, { new: true });
+        if (deleteExisting) {
+            await this.delete(album);
+            album = undefined;
         }
-
-    }
-
-    public async getAlbum(rawAlbum: any) {
-
-        let album: any = await AlbumController.findOne({ title: rawAlbum.self.title });
-
-        console.log('a', album);
-
+        
         if (!album) {
-            album = await AlbumController.create({
+            album = await Album.create({
                 title: rawAlbum.self.title,
                 description: rawAlbum.self.description,
                 date: new Date(rawAlbum.self.date.timestamp * 1000),
                 photos: [],
             })
         }
+        
+        for (const photo of rawAlbum.photos) {
+
+            let p: any = {
+                title: photo.title,
+                description: photo.description,
+                date: new Date(photo.photoTakenTime.timestamp * 1000),
+                album: album,
+                views: photo.imageViews,
+                location: undefined
+            }
+
+            if(photo.geoData.longitude > 0 && photo.geoData.latitude > 0) {
+                p.location = {
+                    type: 'Point',
+                    coordinates: [
+                        photo.geoData.longitude,
+                        photo.geoData.latitude,
+                    ]
+                }
+            }
+
+            const doc = await Photo.create(p);
+
+            // const updated = await AlbumModel.findOneAndUpdate({ _id: album._id }, 
+            //     { $push: { 'photos': doc._id }
+            // }, { new: true });
+        }
 
         console.log(album);
+        console.log({ photos: rawAlbum.photos.length });
 
-        return album;
     }
 
-    private async parseRawAlbum(albumName: string) {
+    private async delete(album: any) {
+
+        if (!album || !album._id)
+            return;
+        
+        for (const p of await Photo.find({ album: album }))
+            await p.delete();
+        
+        await Album.findOneAndDelete({ title: album.title });
+    }
+
+    private async readJSON(albumName: string) {
 
         const albumDir = path.join(this.baseDir, albumName);
         const allFiles = await fs.promises.readdir(albumDir);

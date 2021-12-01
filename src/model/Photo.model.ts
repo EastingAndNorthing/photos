@@ -6,8 +6,8 @@ export interface IPhoto extends Document {
     title: string;
     description: string;
     date: Date;
-    location: Point;
-    album: IAlbum;
+    location?: Point;
+    album?: IAlbum;
 }
 
 const PhotoSchema: Schema = new Schema({
@@ -22,4 +22,4 @@ const PhotoSchema: Schema = new Schema({
     views: { type: Number, required: false }
 });
 
-export default mongoose.model<IPhoto>('Photo', PhotoSchema);
+export const Photo = mongoose.model<IPhoto>('Photo', PhotoSchema);
