@@ -1,19 +1,19 @@
 import mongoose from 'mongoose';
 import { getConfig } from '../config';
 
-export default (dbUrl: string) => {
+export default () => {
 
     const connect = () => {
         mongoose
             .connect(
-                dbUrl,
-                { 
+                getConfig('dbUrl'),
+                {
                     dbName: getConfig('dbName'),
                     // useNewUrlParser: true
                 }
             )
             .then(() => {
-                return console.info(`Successfully connected to ${dbUrl}`);
+                return console.info(`Successfully connected to ${getConfig('dbUrl')}`);
             })
             .catch(error => {
                 console.error('Error connecting to database: ', error);

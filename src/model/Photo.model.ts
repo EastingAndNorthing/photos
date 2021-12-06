@@ -4,6 +4,7 @@ import { IAlbum } from './Album.model';
 
 export interface IPhoto extends Document {
     title: string;
+    src: string,
     description: string;
     date: Date;
     location?: Point;
@@ -12,6 +13,7 @@ export interface IPhoto extends Document {
 
 const PhotoSchema: Schema = new Schema({
     title: { type: String, required: true },
+    src: { type: String, required: true },
     description: { type: String, required: false },
     date: { type: Date, required: false },
     location: PointSchema,

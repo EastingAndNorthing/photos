@@ -36,10 +36,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             let $img = $('<img />', {
                 // id: 'Myid',
-                src: `../storage/${photo.album.title}/${photo.title}`,
+                src: photo.src,
                 alt: photo.description
             });
-            $img.appendTo($grid);
+
+            let $div = $(`<a href="${photo.src}" target="_blank">
+                <p>${photo.title}</p>
+                <p>${new Date(photo.date).toLocaleDateString('nl')}</p>
+            </a>`)
+            
+            $img.appendTo($div);
+            $div.appendTo($grid);
         }
     }
 

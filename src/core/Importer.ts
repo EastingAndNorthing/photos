@@ -1,110 +1,73 @@
-import fs from "fs"
-import path from "path"
+import { Router, Request, Response } from "express";
 import { Photo } from "../model/Photo.model";
 import { Album } from "../model/Album.model";
 import { Point } from "../schema/PointSchema";
+import path from "path"
+import fs from "fs"
+import { FileManager } from "./FileManager";
 
 export class Importer {
 
     baseDir = './';
 
-    constructor(baseDir: string) {
-        this.baseDir = baseDir;
+    f = new FileManager();
+
+    constructor(baseDir?: string) {
+        if (baseDir) this.baseDir = baseDir;
     }
-
-    public async findAlbums() {
-        return (await fs.promises.readdir(this.baseDir, { withFileTypes: true }))
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => dirent.name)
-
-        // return await fs.promises.readdir(this.baseDir);
-    }
-
-    public async import(albumName: string, deleteExisting = false) {
-
-        const rawAlbum = await this.readJSON(albumName);
-
-        let album: any = await Album.findOne({ title: rawAlbum.self.title });
-
-        if (deleteExisting) {
-            await this.delete(album);
-            album = undefined;
-        }
+    
+    public async import() {
         
-        if (!album) {
-            album = await Album.create({
-                title: rawAlbum.self.title,
-                description: rawAlbum.self.description,
-                date: new Date(rawAlbum.self.date.timestamp * 1000),
-                photos: [],
-            })
-        }
-        
-        for (const photo of rawAlbum.photos) {
+        await this.f.init();
+        const albums = await this.f.getAlbums(this.baseDir);
 
-            let p: any = {
-                title: photo.title,
-                description: photo.description,
-                date: new Date(photo.photoTakenTime.timestamp * 1000),
-                album: album,
-                views: photo.imageViews,
-                location: undefined
+        for (const album of albums) {
+            let albumDoc: any = await Album.findOne({ title: album });
+                        
+            if (!albumDoc) {
+                albumDoc = await Album.create({
+                    title: album,
+                    description: '',
+                    date: new Date(),
+                })
             }
 
-            if(photo.geoData.longitude > 0 && photo.geoData.latitude > 0) {
-                p.location = {
-                    type: 'Point',
-                    coordinates: [
-                        photo.geoData.longitude,
-                        photo.geoData.latitude,
-                    ]
+            this.deleteItemsInAlbum(albumDoc); // Force reload all
+
+            const media = await this.f.getMedia(album);
+            for (const item of media) {
+
+                // @TODO should also delete photos if not in file list, how?
+                let photoDoc: any = undefined // await Photo.findOne({ src: item.src });
+
+                if (!photoDoc) {
+                    photoDoc = await Photo.create({
+                        src: item.src,
+                        title: item.title,
+                        description: '',
+                        date: new Date(item.date),
+                        album: albumDoc,
+                        location: item.location
+                    });
                 }
+
+                // const updated = await AlbumModel.findOneAndUpdate({ _id: album._id }, 
+                //     { $push: { 'photos': doc._id }
+                // }, { new: true });
             }
-
-            const doc = await Photo.create(p);
-
-            // const updated = await AlbumModel.findOneAndUpdate({ _id: album._id }, 
-            //     { $push: { 'photos': doc._id }
-            // }, { new: true });
         }
-
-        console.log(album);
-        console.log({ photos: rawAlbum.photos.length });
 
     }
 
-    private async delete(album: any) {
+    private async deleteItemsInAlbum(album: any) {
 
         if (!album || !album._id)
             return;
         
-        for (const p of await Photo.find({ album: album }))
+        for (const p of await Photo.find({ album }))
             await p.delete();
         
-        await Album.findOneAndDelete({ title: album.title });
+        // await Album.findOneAndDelete({ title: album.title });
     }
 
-    private async readJSON(albumName: string) {
-
-        const albumDir = path.join(this.baseDir, albumName);
-        const allFiles = await fs.promises.readdir(albumDir);
-        
-        const jsonFiles = allFiles.filter(file => 
-            file.endsWith('json') && file !== 'metadata.json'
-        );
-
-        let parsed: any[] = [];
-
-        for (const file of jsonFiles) {
-            const buffer = await fs.promises.readFile(path.join(albumDir, file));
-            parsed.push(JSON.parse(buffer.toString()));
-        }
-
-        const meta = await fs.promises.readFile(path.join(albumDir, 'metadata.json'));
-
-        return {
-            self: JSON.parse(meta.toString()),
-            photos: parsed
-        }
-    }
 }

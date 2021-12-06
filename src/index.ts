@@ -1,5 +1,5 @@
 import { getConfig } from "./config";
-import connect from './core/DB';
+import connectDB from './core/DB';
 import routes from './routes';
 
 const express = require("express");
@@ -22,7 +22,7 @@ app.options('*', cors());
 app.use('/', express.static(path.join(baseDir, 'public')))
 app.use('/storage', express.static(storageDir))
 
-connect(getConfig('dbUrl'));
+connectDB();
 app.use(routes);
 
 const httpServer = http.createServer(app);
